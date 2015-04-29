@@ -1,9 +1,8 @@
-//
-//  Salt and Pepper Noise
-//
-//  Created by HyunJun Kim on 2015. 4. 29.
-//  Copyright (c) 2015년 HyunJun Kim. All rights reserved.
-//
+/**
+ * Salt and Pepper Noise
+ *
+ * Written by HyunJun Kim
+ */
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
@@ -12,43 +11,6 @@
 
 using namespace std;
 using namespace cv;
-
-void saltAndPepperNoise(Mat& image, float density);
-
-int main() {
-    
-    string filePath;
-    Mat image;
-    
-    // 변환을 적용할 이미지를 불러온다.
-    while (true) {
-        
-        cout << "Input your image path: ";
-        cin >> filePath;
-
-        image = imread(filePath, 1);
-        
-        if(!image.data)
-            cout << "Could not open or find the image." << endl;
-        else break;
-    }
-    
-    // 이미지에 변환을 적용한다.
-    saltAndPepperNoise(image, 0.1f);
-    
-    // 변환된 이미지를 화면에 띄운다.
-    namedWindow("Transformed", CV_WINDOW_AUTOSIZE);
-    imshow("Transformed", image);
-    
-    // 변환된 이미지를 저장한다.
-    cout << "Input path to save the output: ";
-    cin >> filePath;
-    imwrite(filePath, image);
-    
-    waitKey(0);
-    
-    return 0;
-}
 
 /**
  * 이미지에 노이즈를 추가한다.
@@ -70,4 +32,40 @@ void saltAndPepperNoise(Mat& image, float density) {
         
         image.at<Vec3b>(Point(rx,ry)) = rand() % 2 ? salt : pepper;
     }
+}
+
+
+/**
+ * 프로그램의 시작
+ */
+int main () {
+    
+    string filePath;
+    Mat image;
+    
+    // 변환을 수행할 파일을 입력받는다.
+    while (true) {
+        
+        cout << "Input your image path: ";
+        cin >> filePath;
+        
+        image = imread(filePath, 1);
+        
+        if(!image.data)
+            cout << "Could not open or find the image." << endl;
+        else break;
+    }
+    
+    // 원본과 변환된 결과를 출력하고 결과를 파일로 저장한다.
+    namedWindow("Original", CV_WINDOW_AUTOSIZE);
+    namedWindow("Transformed", CV_WINDOW_AUTOSIZE);
+    
+    imshow("Original", image);
+    
+    saltAndPepperNoise(image, 0.1);
+    imshow("Transformed", image);
+    imwrite("transformed "+filePath, image);
+    
+    waitKey(0);
+    return 0;
 }
