@@ -18,14 +18,14 @@ using namespace cv;
  *
  * @Mat& image - 변환될 이미지
  */
-Mat midpointFilter(Mat& image) {
+void midpointFilter(Mat& input, Mat& output) {
     
     const int neighbors[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, 1}, {-1, 1}, {1, -1}};
     
-    Mat output(image.rows, image.cols, CV_8UC1);
+    output.create(input.rows, input.cols, CV_8UC1);
     
-    for (int x = 0; x < image.rows; x++) {
-        for (int y = 0; y < image.cols; y++) {
+    for (int y = 0; y < input.rows; y++) {
+        for (int x = 0; x < input.cols; x++) {
             
             uchar maximum = 0;
             uchar minimum = 255;
@@ -35,13 +35,10 @@ Mat midpointFilter(Mat& image) {
                 int nx = neighbors[i][0] + x;
                 int ny = neighbors[i][1] + y;
                 
-                if(nx < 0 || ny < 0 || nx >= image.rows || ny >= image.cols)
+                if(nx < 0 || ny < 0 || nx >= input.cols || ny >= input.rows)
                     continue;
                 
-                Vec3b rgb = image.at<Vec3b>(nx, ny);
-                
-                // Greyscaling by luminosity method
-                uchar greyscale = 0.07f * rgb[0] + 0.72f * rgb[1] + 0.21f * rgb[2];
+                uchar greyscale = input.at<uchar>(ny, nx * input.channels());
                 
                 if(maximum < greyscale)
                     maximum = greyscale;
@@ -49,10 +46,9 @@ Mat midpointFilter(Mat& image) {
                 if(minimum > greyscale)
                     minimum = greyscale;
             }
-            output.at<uchar>(x, y) = (maximum + maximum) / 2;
+            output.at<uchar>(y, x) = (maximum + minimum) / 2;
         }
     }
-    return output;
 }
 
 /**
@@ -61,7 +57,7 @@ Mat midpointFilter(Mat& image) {
 int main () {
     
     string filePath;
-    Mat image;
+    Mat image, transform;
     
     // 변환을 수행할 파일을 입력받는다.
     while (true) {
@@ -76,15 +72,16 @@ int main () {
         else break;
     }
     
+    midpointFilter(image, transform);
+    
     // 원본과 변환된 결과를 출력하고 결과를 파일로 저장한다.
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
-    namedWindow("Transformed", CV_WINDOW_AUTOSIZE);
+    namedWindow("Transform", CV_WINDOW_AUTOSIZE);
     
     imshow("Original", image);
+    imshow("Transform", transform);
     
-    image = midpointFilter(image);
-    imshow("Transformed", image);
-    imwrite("transformed "+filePath, image);
+    imwrite("transform "+filePath, image);
     
     waitKey(0);
     return 0;
