@@ -23,15 +23,30 @@ void saltAndPepperNoise(Mat& image, float density) {
     const Vec3b salt(255, 255, 255);
     const Vec3b pepper(0, 0, 0);
     
-    int totalNoisePixels = image.rows * image.cols * density;
+    int size = image.rows * image.cols;
     
-    for (int i = 0; i < totalNoisePixels; i++) {
+    int* randa = new int[size];
+    int* randc = new int[(int)(size * density)];
+    
+    for (int i = 0; i < size; i++)
+        randa[i] = i;
+    
+    for (int i = 0; i < size * density; i++) {
+        int rando = rand() % (size - i);
+        randc[i] = randa[rando];
+        randa[rando] = size - i;
+    }
+    
+    for (int i = 0; i < size * density; i++) {
         
-        int rx = rand() % image.cols;
-        int ry = rand() % image.rows;
+        int rx = randc[i] % image.cols;
+        int ry = randc[i] / image.cols;
         
         image.at<Vec3b>(Point(rx,ry)) = rand() % 2 ? salt : pepper;
     }
+    
+    delete randc;
+    delete randa;
 }
 
 
