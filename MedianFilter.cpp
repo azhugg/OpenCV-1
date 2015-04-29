@@ -72,12 +72,12 @@ int main () {
     
     // 원본과 변환된 결과를 출력하고 결과를 파일로 저장한다.
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
-    namedWindow("Transformed", CV_WINDOW_AUTOSIZE);
+    namedWindow("Transform", CV_WINDOW_AUTOSIZE);
     
     imshow("Original", image);
     imshow("Transform", transform);
     
-    imwrite("transformed "+filePath, image);
+    imwrite("transform "+filePath, image);
     
     waitKey(0);
     return 0;
