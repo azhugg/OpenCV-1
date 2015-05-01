@@ -12,6 +12,10 @@
 using namespace std;
 using namespace cv;
 
+uchar intensity(Vec3b rgb) {
+    return (rgb[0] + rgb[1] + rgb[2]) / 3;
+}
+
 /**
  * 이미지에 Midpoint Value Filter를 적용한다.
  * (인접한 픽셀 중 가장 greyscale값이 높은 픽셀값과 낮은 픽셀값의 평균을 자신의 값으로 설정)
@@ -22,13 +26,16 @@ void midpointFilter(Mat& input, Mat& output) {
     
     const int neighbors[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, 1}, {-1, 1}, {1, -1}};
     
-    output.create(input.rows, input.cols, CV_8UC1);
+    output.create(input.rows, input.cols, CV_8UC3);
     
     for (int y = 0; y < input.rows; y++) {
         for (int x = 0; x < input.cols; x++) {
             
             uchar maximum = 0;
             uchar minimum = 255;
+            
+            Vec3b maxRgb;
+            Vec3b minRgb;
             
             for (int i = 0; i < 8; i++) {
                 
@@ -38,15 +45,20 @@ void midpointFilter(Mat& input, Mat& output) {
                 if(nx < 0 || ny < 0 || nx >= input.cols || ny >= input.rows)
                     continue;
                 
-                uchar greyscale = input.at<uchar>(ny, nx * input.channels());
+                Vec3b rgb = input.at<Vec3b>(ny, nx);
+                uchar greyscale = intensity(rgb);
                 
-                if(maximum < greyscale)
+                if(maximum < greyscale) {
                     maximum = greyscale;
+                    maxRgb = rgb;
+                }
                 
-                if(minimum > greyscale)
+                if(minimum > greyscale) {
                     minimum = greyscale;
+                    minRgb = rgb;
+                }
             }
-            output.at<uchar>(y, x) = (maximum + minimum) / 2;
+            output.at<Vec3b>(y, x) = (maxRgb + minRgb) / 2;
         }
     }
 }
