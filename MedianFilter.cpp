@@ -12,6 +12,10 @@
 using namespace std;
 using namespace cv;
 
+uchar intensity(Vec3b rgb) {
+    return (rgb[0] + rgb[1] + rgb[2]) / 3;
+}
+
 /**
  * 이미지에 Median Value Filter를 적용한다.
  * (인접한 픽셀들의 greyscale값 중 중간값을 자신의 값으로 설정)
@@ -22,12 +26,13 @@ void medianFilter(Mat& input, Mat& output) {
     
     const int neighbors[8][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {1, 1}, {-1, 1}, {1, -1}};
     
-    output.create(input.rows, input.cols, CV_8UC1);
+    output.create(input.rows, input.cols, CV_8UC3);
     
     for (int y = 0; y < input.rows; y++) {
         for (int x = 0; x < input.cols; x++) {
             
             uchar ranks[8];
+            uchar rankc[8];
             
             for (int i = 0; i < 8; i++) {
                 
@@ -37,15 +42,25 @@ void medianFilter(Mat& input, Mat& output) {
                 if(nx < 0 || ny < 0 || nx >= input.cols || ny >= input.rows)
                     continue;
                 
-                uchar greyscale = input.at<uchar>(ny, nx * input.channels());
+                Vec3b rgb = input.at<Vec3b>(ny, nx);
+                uchar greyscale = intensity(rgb);
+                
                 ranks[i] = greyscale;
+                rankc[i] = greyscale;
             }
+            
             std::sort(ranks, ranks + sizeof(ranks));
-            output.at<uchar>(y, x) = ranks[3];
+            
+            int medianIndex = 0;
+            for (int i = 0; i < 8; i++) {
+                if (ranks[3] == rankc[i])
+                    medianIndex = i;
+            }
+            
+            output.at<Vec3b>(y, x) = input.at<Vec3b>(neighbors[medianIndex][1] + y, neighbors[medianIndex][0] + x);
         }
     }
 }
-
 
 /**
  * 프로그램의 시작
