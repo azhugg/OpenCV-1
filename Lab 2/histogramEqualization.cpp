@@ -14,6 +14,39 @@
 using namespace cv;
 using namespace std;
 
+/*
+ * 원본 이미지의 V성분 히스토그램을 구한다.
+ */
+void evaluateHistogram(Mat& input, int* output, int channel) {
+    
+    for (int i = 0; i < 256; i++)
+    output[i] = 0;
+    
+    for (int y = 0; y < input.rows; y++) {
+        for (int x = 0; x < input.cols; x++) {
+            output[input.at<Vec3b>(y, x)[channel]]++;
+        }
+    }
+}
+
+/*
+ * 히스토그램의 CDF데이터를 구하고, 그 최솟값을 리턴한다.
+ */
+int evaluateCdf(int* input, int *output) {
+    
+    int accumulation = 0;
+    int minimum = 0;
+    
+    for (int i = 0; i < 256; i++) {
+        accumulation += input[i];
+        output[i] = accumulation;
+        if (minimum == 0 && accumulation >= 0)
+        minimum = accumulation;
+    }
+    
+    return minimum;
+}
+
 /**
  * 컬러 이미지를 히스토그램 균등화한다.
  *
@@ -23,47 +56,26 @@ using namespace std;
 void equalize(Mat& input, Mat& output) {
     
     Mat temp;
+    int channel = 0;
     
     // 이미지의 색공간을 HSV로 변환한다.
-    cvtColor(input, temp, CV_RGB2HSV);
+    cvtColor(input, temp, CV_RGB2Lab);
     
     double size = input.rows * input.cols;
+    int histogram[256], cdf[256], minimum = 0;
     
-    int histogram[256];
-    int cumulativeHistogram[256];
-    int minimumCumulativeValue = 0;
-    
-    // 원본 이미지의 V성분 히스토그램을 구한다.
-    for (int i = 0; i < 256; i++)
-    histogram[i] = 0;
-    
-    for (int y = 0; y < input.rows; y++) {
-        for (int x = 0; x < input.cols; x++) {
-            uchar greyvalue = temp.at<Vec3b>(y, x)[2];
-            histogram[greyvalue]++;
-        }
-    }
-    
-    // 히스토그램의 최소 성분을 구한다.
-    int accumulation = 0;
-    for (int i = 0; i < 256; i++) {
-        accumulation += histogram[i];
-        cumulativeHistogram[i] = accumulation;
-        if (minimumCumulativeValue == 0 && accumulation > 0)
-        minimumCumulativeValue = accumulation;
-    }
+    evaluateHistogram(temp, histogram, channel);
+    minimum = evaluateCdf(histogram, cdf);
     
     // 계산 공식에 의해 이미지를 히스토그램 균등화한다.
     for (int y = 0; y < input.rows; y++) {
         for (int x = 0; x < input.cols; x++) {
-            uchar greyvalue = temp.at<Vec3b>(y, x)[2];
-            uchar normalizedIntensity = round(((cumulativeHistogram[greyvalue] - minimumCumulativeValue) / size) * 255);
-            temp.at<Vec3b>(y, x)[2] = normalizedIntensity;
+            temp.at<Vec3b>(y, x)[channel] = round(((cdf[temp.at<Vec3b>(y, x)[channel]] - minimum) / (size - minimum)) * 255);
         }
     }
     
     // 이미지의 색공간을 RGB로 변환한다.
-    cvtColor(temp, output, CV_HSV2RGB);
+    cvtColor(temp, output, CV_Lab2RGB);
 }
 
 int main() {
