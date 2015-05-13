@@ -14,10 +14,15 @@
 using namespace cv;
 using namespace std;
 
+const int YCrCb[3] = {CV_BGR2YCrCb, CV_YCrCb2BGR, 0};
+const int HSV[3] = {CV_BGR2HSV, CV_HSV2BGR, 2};
+const int HLS[3] = {CV_BGR2HLS, CV_HLS2BGR, 1};
+const int Lab[3] = {CV_BGR2Lab, CV_Lab2BGR, 0};
+
 // 색 공간 정보 (여기서는 L*a*b 색공간 사용)
-const int COLOR_SPACE_CONVERSION[2] = {CV_BGR2Lab, CV_Lab2BGR};
+const int* COLOR_SPACE_CONVERSION = HSV;
 const int COLOR_MAX = 255;
-const int CHANNEL = 0;
+const int CHANNEL = COLOR_SPACE_CONVERSION[2];
 
 /*
  * 원본 이미지의 V성분 히스토그램을 구한다.
