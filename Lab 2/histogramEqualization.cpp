@@ -14,17 +14,22 @@
 using namespace cv;
 using namespace std;
 
+// 색 공간 정보 (여기서는 L*a*b 색공간 사용)
+const int COLOR_SPACE_CONVERSION[2] = {CV_BGR2Lab, CV_Lab2BGR};
+const int COLOR_MAX = 255;
+const int CHANNEL = 0;
+
 /*
  * 원본 이미지의 V성분 히스토그램을 구한다.
  */
-void evaluateHistogram(Mat& input, int* output, int channel) {
+void evaluateHistogram(Mat& input, int* output) {
     
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i <= COLOR_MAX; i++)
     output[i] = 0;
     
     for (int y = 0; y < input.rows; y++) {
         for (int x = 0; x < input.cols; x++) {
-            output[input.at<Vec3b>(y, x)[channel]]++;
+            output[(int)input.at<Vec3b>(y, x)[CHANNEL]]++;
         }
     }
 }
@@ -37,7 +42,7 @@ int evaluateCdf(int* input, int *output) {
     int accumulation = 0;
     int minimum = 0;
     
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i <= COLOR_MAX; i++) {
         accumulation += input[i];
         output[i] = accumulation;
         if (minimum == 0 && accumulation >= 0)
@@ -56,26 +61,25 @@ int evaluateCdf(int* input, int *output) {
 void equalize(Mat& input, Mat& output) {
     
     Mat temp;
-    int channel = 0;
     
-    // 이미지의 색공간을 HSV로 변환한다.
-    cvtColor(input, temp, CV_RGB2Lab);
+    // 이미지의 색공간을 정의된 공간으로 변환한다.
+    cvtColor(input, temp, COLOR_SPACE_CONVERSION[0]);
     
     double size = input.rows * input.cols;
-    int histogram[256], cdf[256], minimum = 0;
+    int histogram[COLOR_MAX + 1], cdf[COLOR_MAX + 1], minimum = 0;
     
-    evaluateHistogram(temp, histogram, channel);
+    evaluateHistogram(temp, histogram);
     minimum = evaluateCdf(histogram, cdf);
     
     // 계산 공식에 의해 이미지를 히스토그램 균등화한다.
     for (int y = 0; y < input.rows; y++) {
         for (int x = 0; x < input.cols; x++) {
-            temp.at<Vec3b>(y, x)[channel] = round(((cdf[temp.at<Vec3b>(y, x)[channel]] - minimum) / (size - minimum)) * 255);
+            temp.at<Vec3b>(y, x)[CHANNEL] = round(((cdf[temp.at<Vec3b>(y, x)[CHANNEL]] - minimum) / (size - minimum)) * COLOR_MAX);
         }
     }
     
     // 이미지의 색공간을 RGB로 변환한다.
-    cvtColor(temp, output, CV_Lab2RGB);
+    cvtColor(temp, output, COLOR_SPACE_CONVERSION[1]);
 }
 
 int main() {
